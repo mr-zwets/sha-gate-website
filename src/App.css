@@ -1,0 +1,162 @@
+body {
+  text-align: center;
+  font-family: sans-serif;
+  overflow: auto;
+  margin: 0;
+}
+header {
+  background-color: #222222;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+.body {
+  min-height: 100vh;
+}
+main {
+  width: 1200px;
+  margin: 0 auto;
+  display: flex;
+}
+.columnL {
+  width: 280px;
+  margin-right: 60px;
+}
+.divTable{
+  height: 500px;
+  overflow: auto;
+  scrollbar-width: thin;
+  padding-right: 10px;
+}
+.columnM {
+  width: 510px;
+}
+.columnR {
+  width: 280px;
+  margin-left: 60px;
+}
+.title {
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+}
+.h2 {
+  font-weight: bold;
+  font-size: 24px;
+  margin: 20px 0;
+  margin-left: 10px;
+  display: inline-block;
+}
+.clickable{
+  cursor: pointer;
+  margin: 0;
+  background: none;
+  border: none;
+  font-size: 16px;
+}
+.topRight{
+  position: absolute;
+  right: 25px;
+}
+.explanation{
+  width: 520px;
+  margin: auto;
+}
+
+table {
+  font-size: 15px;
+}
+.counter{
+  display: inline-block;
+}
+.tick {
+  font-size: 2.5em;
+  width: fit-content;
+  padding-left: 10px;
+}
+.blocks {
+  font-size: 24px;
+  font-weight: bold;
+}
+ul {
+  padding: 0;
+}
+#address-template {
+  text-align: center;
+}
+.payoutAddress {
+  width: 90%;
+  margin: auto;
+  overflow-wrap: anywhere;
+}
+footer {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: -85px;
+  margin-bottom: 0px;
+}
+.githublogo {
+  width: 64px;
+  position: relative;
+  top: -8px;
+}
+.twitterlogo {
+  width: 50px;
+  position: relative;
+  top: 0px;
+}
+.animate{
+  animation: rotate 1.5s linear;
+}
+@keyframes rotate{
+  0%{
+      transform: rotate(0deg);
+  }
+  50%{
+      transform: rotate(-180deg);
+  }
+  100%{
+      transform: rotate(-360deg);
+  }
+}
+@media screen and (max-height: 700px) {
+  footer {
+    margin-top: -40px;
+  }
+}
+@media screen and (max-width: 1200px) {
+  main {
+    width: 100%;
+    max-width: 500px;
+    flex-direction: column;
+  }
+  .columnL {
+    order: 2;
+    width: 300px;
+    margin: auto;
+    margin-top: 20px;
+  }
+  .divTable{max-height: 500px; height: 100%;}
+  .columnR {
+    width: 100%;
+    order: 1;
+    margin: auto;
+    margin-top: 20px;
+  }
+  .box{
+    width: 90%;
+    margin: auto;
+  }
+  footer {
+    margin-top: 50px;
+  }
+}
+@media screen and (max-width: 650px) {
+  .explanation{
+    width: 90%;
+  }
+  .columnR {
+    width: 90%;
+  }
+}
