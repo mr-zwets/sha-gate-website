@@ -137,6 +137,9 @@ footer {
     margin: auto;
     margin-top: 20px;
   }
+  .columnM {
+    width: 100%;
+  }
   .divTable{max-height: 500px; height: 100%;}
   .columnR {
     width: 100%;
