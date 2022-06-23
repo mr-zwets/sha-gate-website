@@ -226,7 +226,7 @@ function App() {
             {contractHistory.map(({state,lastbalance,lastInteraction,address}) => 
               (<tr key={state} style={{lineHeight:'1.8'}}>
                   <td>
-                  <a target='_blanc' style={{textDecoration:'none'}} href={`https://blockchair.com/bitcoin-cash/address/${address}`}>
+                  <a target='_blanc' style={{textDecoration:'none'}} href={`https://testnet4.imaginary.cash/address/${address}`}>
                     {state}
                   </a>
                 </td>
