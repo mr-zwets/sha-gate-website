@@ -14,7 +14,7 @@ function App() {
       yesVotes: 0,
       noVotes: 0
     },
-    votingPeriod: 100970,
+    votingPeriod: 101218,
     p2shpayout: "",
     lastInteraction: "initialization"
   }
