@@ -2,7 +2,7 @@ import './App.css';
 import {useState,useEffect} from 'react'
 import {intToHex} from './utils'
 import contractParams from './contractParams.json';
-const { ElectrumNetworkProvider, Contract, SignatureTemplate } = require('cashscript');
+const { ElectrumNetworkProvider, Contract } = require('cashscript');
 const shaGateContract = require("./sha-gate-improved.json");
 const { ElectrumClient, ElectrumTransport } = require('electrum-cash');
 
@@ -53,8 +53,9 @@ function App() {
       const contractHistory = JSON.parse(localStorage.getItem("contractHistory"));
       // If the local storage is not null
       if (lastStateContract !== null && contractHistory !== null) {
-        if(contractHistory[contractHistory.length-1]!=contractParams.address){
+        if(contractHistory[contractHistory.length-1].address!==contractParams.address){
           localStorage.clear()
+          setReadLocalStorage(true);
           return
         }
         // Write the contractHistory & lastStateContract to state, dot notation for rerender
@@ -143,8 +144,8 @@ function App() {
             let yesVotes = lastStateContract.votes.yesVotes
             let noVotes = lastStateContract.votes.noVotes
             let p2shpayoutHex = contractParams.payout
-            let lastInteraction= lastStateContract.address==newContractAddress? "bridging":"miner-voting";
-            if(lastInteraction=="miner-voting"){
+            let lastInteraction= lastStateContract.address===newContractAddress? "bridging":"miner-voting";
+            if(lastInteraction==="miner-voting"){
               const prevVoteCount = lastStateContract.votes.totalVotes;
               let newVoteCountBytes = intToHex(prevVoteCount+1,2);
               const params = [
@@ -158,16 +159,9 @@ function App() {
                 newVoteCountBytes
               ];
               const newContract = new Contract(shaGateContract, params, provider);
-              newContractAddress==newContract.address? yesVotes += 1:noVotes += 1
+              newContractAddress===newContract.address? yesVotes += 1:noVotes += 1
               totalVotes= yesVotes - 2*noVotes
             }
-
-
-            const lengthCoinbaseTxHex = redeemScriptHex.slice(4,6);
-            let lengthCoinbaseTx = parseInt("0x"+lengthCoinbaseTxHex)*2;
-            // first bool, push length data, datalength + ... + ??,push length data, datalength
-            let startLockingBytecode = 6 + lengthCoinbaseTx + 10
-            const voteTotalHex = redeemScriptHex.slice(startLockingBytecode, startLockingBytecode +4);
 
             const newVotes = {
               totalVotes,
@@ -196,7 +190,8 @@ function App() {
 
   let blocksLeft =lastStateContract.votingPeriod+contractParams.period-blockHeight;
   let percentageLeft = ((1-blocksLeft/contractParams.period)*100).toFixed(1);
-  let yesPercentage = lastStateContract.votes.yesVotes/lastStateContract.votes.totalVotes
+  let voteCount = lastStateContract.votes.yesVotes+lastStateContract.votes.noVotes
+  let yesPercentage = lastStateContract.votes.yesVotes/voteCount
   const toBCH = (satAmount) =>  (satAmount/ 100000000)
   
   let startdate
@@ -241,7 +236,7 @@ function App() {
             <h2>Voting period</h2>
             <div className="votes">{percentageLeft}% finished, {blocksLeft} blocks left</div>
             <progress value={percentageLeft} max="100" style={{width:"300px",height:"30px"}}></progress> 
-            <div className="votes">{`${yesPercentage*100}% yes-votes (${lastStateContract.votes.yesVotes}/${lastStateContract.votes.totalVotes})`}</div>
+            <div className="votes">{`${yesPercentage*100}% yes-votes (${lastStateContract.votes.yesVotes}/${voteCount})`}</div>
             <div className="status">Current status: {yesPercentage>2/3?"approved":"rejected"}</div>
             <br/>
             <h2>Payout proposal</h2>
