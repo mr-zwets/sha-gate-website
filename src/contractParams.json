@@ -1,6 +1,14 @@
 {
     "period":2016,
-    "address":"pqsk6w5x7zqm9j7zpz906ft6jpm9evlgp54s0qlzsx",
     "txid":"37716a949de659731fe00339f607004290289fe0610c36494f5ec9ab441c4ef5",
-    "initialVout": 0
+    "initialVout": 1,
+    "pkhOperator0":"b2aadc8ded7c3fa698db0b5ca629a17887c521e1",
+    "pkhOperator1":"07449bd5d2f040c4b2803b914b650105db1952b7",
+    "pkhOperator2":"63949a40fbbacabe3f8bb3ee814080754f6865e9",
+    "pkhOperator3":"2a5e1d2625de52ecf41641cceda05b7d85ae5dea",
+    "pkhOperator4":"ab8cd6ce4e356e18fbd566f9fb6b5b71c411e0eb",
+    "startPeriodBytes":"0000000000000000",
+    "payout":"00000000000000000000000000000000000000000000000000000000000000",
+    "voteCountBytes": "0000",
+    "address":"pqsk6w5x7zqm9j7zpz906ft6jpm9evlgp54s0qlzsx"
 }
