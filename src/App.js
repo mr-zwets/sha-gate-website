@@ -193,6 +193,7 @@ function App() {
   let voteCount = lastStateContract.votes.yesVotes+lastStateContract.votes.noVotes
   let yesPercentage = lastStateContract.votes.yesVotes/voteCount
   const toBCH = (satAmount) =>  (satAmount/ 100000000)
+  let withrawalInitialized = lastStateContract.p2shpayout!=='0'.repeat(62)
   
   let startdate
   if(contractHistory.length-1>0){
@@ -234,13 +235,25 @@ function App() {
             <div className="lastbalance">{toBCH(lastStateContract.lastbalance).toFixed(6)} tBCH</div>
             <br/>
             <h2>Voting period</h2>
-            <div className="votes">{percentageLeft}% finished, {blocksLeft} blocks left</div>
-            <progress value={percentageLeft} max="100" style={{width:"300px",height:"30px"}}></progress> 
-            <div className="votes">{`${yesPercentage*100}% yes-votes (${lastStateContract.votes.yesVotes}/${voteCount})`}</div>
-            <div className="status">Current status: {yesPercentage>2/3?"approved":"rejected"}</div>
+            {withrawalInitialized?
+            <><div className="votes">{percentageLeft}% finished, {blocksLeft} blocks left</div>
+              <progress value={percentageLeft} max="100" style={{width:"300px",height:"30px"}}></progress> 
+              <div className="votes">{`${yesPercentage*100}% yes-votes (${lastStateContract.votes.yesVotes}/${voteCount})`}</div>
+              <div className="status">Current status: {yesPercentage>2/3?"approved":"rejected"}</div>
+            </> : <>
+              <div>The voting period has not started.</div>
+              <div>A new withdrawal proposal has to be initialized first.</div>
+              <br/>
+            </>
+            }
+            
             <br/>
-            <h2>Payout proposal</h2>
-            <div className="payoutProposal">{lastStateContract.p2shpayout}</div>
+            <h2>Withdrawal proposal</h2>
+            <div>Open for a new proposal to be initialized.</div>
+            <div className="withdrawalProposal">
+              {withrawalInitialized?lastStateContract.p2shpayout
+              :"Initializing means one of the 5 operators proposes a withrawal transaction from the sidechain for the miners to vote on."}
+              </div>
           </div>
           }
         </section> 
