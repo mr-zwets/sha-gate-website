@@ -14,15 +14,15 @@ function App() {
     state: 0,
     txid: contractParams.txid,
     address: contractParams.address,
-    lastbalance: 5000,
+    lastbalance: 10000000,
     votes: {
       totalVotes: 0,
       yesVotes: 0,
       noVotes: 0
     },
-    votingPeriod: 101218,
+    votingPeriod: 0,
     p2shpayout: contractParams.payout,
-    lastInteraction: "initialization"
+    lastInteraction: "created sidechain covenant"
   }
   const initialVout = contractParams.initialVout;
   const [lastStateContract, setLastStateContract] = useState(firstStateContract);
@@ -132,35 +132,50 @@ function App() {
           if(input.txid === lastStateContract.txid && voutInput === contractVout){
             console.log('found tx spending the contract utxo!')
             const newBalance =  transactionDetails.vout[0].value * 100000000;
-            const newvotingPeriod = lastStateContract.votingPeriod;
+            let newvotingPeriod = lastStateContract.votingPeriod;
             const newContractAddress = transactionDetails.vout[0].scriptPubKey.addresses[0];
             let unixTimestamp = transactionDetails.time
             if(unixTimestamp===0) unixTimestamp=Date.now();
             const txtime = new Date(unixTimestamp* 1000).toUTCString();
-
-            const redeemScriptHex = input.scriptSig.hex;
             
             let totalVotes = lastStateContract.votes.totalVotes
             let yesVotes = lastStateContract.votes.yesVotes
             let noVotes = lastStateContract.votes.noVotes
-            let p2shpayoutHex = contractParams.payout
-            let lastInteraction= lastStateContract.address===newContractAddress? "bridging":"miner-voting";
-            if(lastInteraction==="miner-voting"){
-              const prevVoteCount = lastStateContract.votes.totalVotes;
-              let newVoteCountBytes = intToHex(prevVoteCount+1,2);
-              const params = [
+            let p2shpayoutHex = lastStateContract.p2shpayout
+            let startPeriodBytes = intToHex(lastStateContract.votingPeriod,8)
+            let lastInteraction = `bridged ${+toBCH(newBalance-lastStateContract.lastbalance).toFixed(6)} tBCH`
+            if(lastStateContract.address!==newContractAddress){
+              // standard contract params without votecount
+              const params= [
                 contractParams.pkhOperator0,
                 contractParams.pkhOperator1,
                 contractParams.pkhOperator2,
                 contractParams.pkhOperator3,
                 contractParams.pkhOperator4,
-                contractParams.startPeriodBytes,
-                contractParams.payout,
-                newVoteCountBytes
+                startPeriodBytes,
+                p2shpayoutHex
               ];
-              const newContract = new Contract(shaGateContract, params, provider);
-              newContractAddress===newContract.address? yesVotes += 1:noVotes += 1
-              totalVotes= yesVotes - 2*noVotes
+              // make contract for yes and no vote
+              const prevVoteCount = lastStateContract.votes.totalVotes;
+              let voteCountBytesAfterYes = intToHex(prevVoteCount+1,2);
+              let voteCountBytesAfterNo = intToHex(prevVoteCount-2,2);
+              const yesParams = [...params,voteCountBytesAfterYes];
+              console.log(yesParams)
+              const noParams = [...params,voteCountBytesAfterNo];;
+              const newContractAfterYes = new Contract(shaGateContract, yesParams, provider);
+              const newContractAfterNo = new Contract(shaGateContract, noParams, provider);
+              if(newContractAddress===newContractAfterYes.address || newContractAddress===newContractAfterNo.address){
+                newContractAddress===newContractAfterYes.address? yesVotes += 1:noVotes += 1
+                lastInteraction = newContractAddress===newContractAfterYes.address? "miner added yes-vote":"miner added no-vote"
+                totalVotes= yesVotes - 2*noVotes
+              } else {
+                lastInteraction = "initialized withdrawal";
+                const redeemScriptHex = input.scriptSig.hex;
+                console.log(redeemScriptHex)
+                p2shpayoutHex = redeemScriptHex.slice(2,64)
+                // normally transactionDetails.locktime but for demo tx height
+                newvotingPeriod = 102366
+              }
             }
 
             const newVotes = {
@@ -191,7 +206,7 @@ function App() {
   let blocksLeft =lastStateContract.votingPeriod+contractParams.period-blockHeight;
   let percentageLeft = ((1-blocksLeft/contractParams.period)*100).toFixed(1);
   let voteCount = lastStateContract.votes.yesVotes+lastStateContract.votes.noVotes
-  let yesPercentage = lastStateContract.votes.yesVotes/voteCount
+  let yesPercentage = voteCount? lastStateContract.votes.yesVotes/voteCount : 1;
   const toBCH = (satAmount) =>  (satAmount/ 100000000)
   let withrawalInitialized = lastStateContract.p2shpayout!=='0'.repeat(62)
   
@@ -232,14 +247,15 @@ function App() {
           {!electrum? (<h2>connecting to electrum server</h2>):
           <div>
             <h2>Balance</h2>
-            <div className="lastbalance">{toBCH(lastStateContract.lastbalance).toFixed(6)} tBCH</div>
+            <div> Sidechain contract holds</div>
+            <div className="lastbalance">{+toBCH(lastStateContract.lastbalance).toFixed(6)} tBCH</div>
             <br/>
             <h2>Voting period</h2>
             {withrawalInitialized?
             <><div className="votes">{percentageLeft}% finished, {blocksLeft} blocks left</div>
               <progress value={percentageLeft} max="100" style={{width:"300px",height:"30px"}}></progress> 
               <div className="votes">{`${yesPercentage*100}% yes-votes (${lastStateContract.votes.yesVotes}/${voteCount})`}</div>
-              <div className="status">Current status: {yesPercentage>2/3?"approved":"rejected"}</div>
+              <div className="status">Current status: {lastStateContract.votes.totalVotes>=0?"approved":"rejected"}</div>
             </> : <>
               <div>The voting period has not started.</div>
               <div>A new withdrawal proposal has to be initialized first.</div>
@@ -249,11 +265,17 @@ function App() {
             
             <br/>
             <h2>Withdrawal proposal</h2>
-            <div>Open for a new proposal to be initialized.</div>
-            <div className="withdrawalProposal">
-              {withrawalInitialized?lastStateContract.p2shpayout
-              :"Initializing means one of the 5 operators proposes a withrawal transaction from the sidechain for the miners to vote on."}
-              </div>
+            {withrawalInitialized?
+            (<>
+              <div>Contract hash:</div>
+              <div>{lastStateContract.p2shpayout.slice(0,46)}</div>
+              <br/>
+              <div>Amount: {toBCH(parseInt('0x'+lastStateContract.p2shpayout.slice(46).match(/../g).reverse().join(''))).toFixed(6)} tBCH</div>
+            </>):
+            (<>
+              <div>Open for a new proposal to be initialized.</div>
+              <div>Initializing means one of the 5 operators proposes a withrawal transaction from the sidechain for the miners to vote on.</div>
+            </>)}
           </div>
           }
         </section> 
@@ -265,11 +287,10 @@ function App() {
               <tr>
                 <th>State</th>
                 <th>Action</th>
-                <th>Balance</th>
               </tr>
           </thead>
           <tbody>
-            {contractHistory.map(({state,lastbalance,lastInteraction,address}) => 
+            {contractHistory.map(({state,lastInteraction,address}) => 
               (<tr key={state} style={{lineHeight:'1.8'}}>
                   <td>
                   <a target='_blanc' style={{textDecoration:'none'}} href={`https://testnet4.imaginary.cash/address/${address}`}>
@@ -279,7 +300,6 @@ function App() {
                 <td>
                   {lastInteraction}
                 </td>
-                <td>{toBCH(lastbalance)+" BCH"}</td>
               </tr>
             ))}
           </tbody>
@@ -296,7 +316,7 @@ function App() {
             target="_blanc" style={{textDecoration:"none",color:"black"}}
           >
           <p>
-          Check contract code
+          Check the contract repo
         </p>
         </a>
         <a
