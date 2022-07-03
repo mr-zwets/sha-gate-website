@@ -160,7 +160,6 @@ function App() {
               let voteCountBytesAfterYes = intToHex(prevVoteCount+1,2);
               let voteCountBytesAfterNo = intToHex(prevVoteCount-2,2);
               const yesParams = [...params,voteCountBytesAfterYes];
-              console.log(yesParams)
               const noParams = [...params,voteCountBytesAfterNo];;
               const newContractAfterYes = new Contract(shaGateContract, yesParams, provider);
               const newContractAfterNo = new Contract(shaGateContract, noParams, provider);
@@ -174,7 +173,7 @@ function App() {
                 console.log(redeemScriptHex)
                 p2shpayoutHex = redeemScriptHex.slice(2,64)
                 // normally transactionDetails.locktime but for demo tx height
-                newvotingPeriod = 102366
+                newvotingPeriod = 10000
               }
             }
 
@@ -203,7 +202,8 @@ function App() {
     checkTxsContractAddr();
   },[readLocalStorage,electrum,lastStateContract])
 
-  let blocksLeft =lastStateContract.votingPeriod+contractParams.period-blockHeight;
+  let currentPeriod = 102366 //lastStateContract.votingPeriod
+  let blocksLeft =currentPeriod+contractParams.period-blockHeight;
   let percentageLeft = ((1-blocksLeft/contractParams.period)*100).toFixed(1);
   let voteCount = lastStateContract.votes.yesVotes+lastStateContract.votes.noVotes
   let yesPercentage = voteCount? lastStateContract.votes.yesVotes/voteCount : 1;
