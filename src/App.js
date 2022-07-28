@@ -173,7 +173,8 @@ function App() {
                 yesVotes = 0;
                 noVotes = 0;
                 totalVotes = 0;
-                lastInteraction = "finilized withdrawal";
+                lastInteraction = `finalized withdrawal of ${+toBCH(parseInt('0x'+lastStateContract.p2shpayout.slice(46).match(/../g).reverse().join(''))).toFixed(6)} tBCH`;
+                p2shpayoutHex = "00".repeat(31);
               } else {
                 lastInteraction = "initialized withdrawal";
                 const redeemScriptHex = input.scriptSig.hex;
@@ -181,9 +182,6 @@ function App() {
                 p2shpayoutHex = redeemScriptHex.slice(2,64)
                 // normally transactionDetails.locktime but for demo tx height
                 newvotingPeriod = 10000
-                if(p2shpayoutHex === "0".repeat(64)){
-                  lastInteraction = "finilized withdrawal";
-                }
               }
             }
 
@@ -218,7 +216,7 @@ function App() {
   let voteCount = lastStateContract.votes.yesVotes+lastStateContract.votes.noVotes
   let yesPercentage = voteCount? lastStateContract.votes.yesVotes/voteCount : 1;
   const toBCH = (satAmount) =>  (satAmount/ 100000000)
-  let withrawalInitialized = lastStateContract.p2shpayout!=='0'.repeat(62)
+  let withrawalInitialized = lastStateContract.p2shpayout!=='00'.repeat(31)
   
   let startdate
   if(contractHistory.length-1>0){
