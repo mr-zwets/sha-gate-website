@@ -153,20 +153,27 @@ function App() {
                 contractParams.pkhOperator3,
                 contractParams.pkhOperator4,
                 startPeriodBytes,
-                p2shpayoutHex
               ];
               // make contract for yes and no vote
               const prevVoteCount = lastStateContract.votes.totalVotes;
               let voteCountBytesAfterYes = intToHex(prevVoteCount+1,2);
               let voteCountBytesAfterNo = intToHex(prevVoteCount-2,2);
-              const yesParams = [...params,voteCountBytesAfterYes];
-              const noParams = [...params,voteCountBytesAfterNo];;
+              const yesParams = [...params,p2shpayoutHex,voteCountBytesAfterYes];
+              const noParams = [...params,p2shpayoutHex,voteCountBytesAfterNo];;
               const newContractAfterYes = new Contract(shaGateContract, yesParams, provider);
               const newContractAfterNo = new Contract(shaGateContract, noParams, provider);
+
+              const clearedParams = [...params,"00".repeat(31),"0000"];;
+              const newContractAfterWithdrawal = new Contract(shaGateContract, clearedParams, provider);
               if(newContractAddress===newContractAfterYes.address || newContractAddress===newContractAfterNo.address){
                 newContractAddress===newContractAfterYes.address? yesVotes += 1:noVotes += 1
                 lastInteraction = newContractAddress===newContractAfterYes.address? "miner added yes-vote":"miner added no-vote"
                 totalVotes= yesVotes - 2*noVotes
+              } else if(newContractAddress===newContractAfterWithdrawal.address) {
+                yesVotes = 0;
+                noVotes = 0;
+                totalVotes = 0;
+                lastInteraction = "finilized withdrawal";
               } else {
                 lastInteraction = "initialized withdrawal";
                 const redeemScriptHex = input.scriptSig.hex;
@@ -174,6 +181,9 @@ function App() {
                 p2shpayoutHex = redeemScriptHex.slice(2,64)
                 // normally transactionDetails.locktime but for demo tx height
                 newvotingPeriod = 10000
+                if(p2shpayoutHex === "0".repeat(64)){
+                  lastInteraction = "finilized withdrawal";
+                }
               }
             }
 
